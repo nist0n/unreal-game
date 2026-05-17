@@ -1,33 +1,30 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Spawner/AsteroidSpawner.h"
 
+#include "PickUp/AsteroidPickUp.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-
-// Sets default values
 AAsteroidSpawner::AAsteroidSpawner()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("Spawn Area"));
+	SetRootComponent(SpawnArea);
 
 	MinSpawnDelay = 0.5f;
 	MaxSpawnDelay = 1.5f;
+	LaunchDirection = FVector(-1.0f, 0.0f, 0.0f);
+	LaunchSpeed = 2500.0f;
+	AsteroidLifetime = 8.0f;
 }
 
-// Called when the game starts or when spawned
 void AAsteroidSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-
 	StartSpawnTimer();
 }
 
-FVector AAsteroidSpawner::GetRandomSpawnPoint()
+FVector AAsteroidSpawner::GetRandomSpawnPoint() const
 {
 	const FVector SpawnOrigin = SpawnArea->Bounds.Origin;
 	const FVector SpawnLimits = SpawnArea->Bounds.BoxExtent;
@@ -42,29 +39,50 @@ void AAsteroidSpawner::SpawnActors()
 		return;
 	}
 
-	FActorSpawnParameters spawnParameters;
-	spawnParameters.Owner = this;
-	spawnParameters.Instigator = GetInstigator();
-	spawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Owner = this;
+	SpawnParameters.Instigator = GetInstigator();
+	SpawnParameters.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	APickUpbase* SpawnedActor = GetWorld()->SpawnActor<APickUpbase>(ActorToSpawn, GetRandomSpawnPoint(),
-		UKismetMathLibrary::RandomRotator(), spawnParameters);
+	APickUpbase* SpawnedActor = GetWorld()->SpawnActor<APickUpbase>(
+		ActorToSpawn,
+		GetRandomSpawnPoint(),
+		UKismetMathLibrary::RandomRotator(),
+		SpawnParameters);
+
+	if (AAsteroidPickUp* Asteroid = Cast<AAsteroidPickUp>(SpawnedActor))
+	{
+		ConfigureSpawnedAsteroid(Asteroid);
+	}
 
 	StartSpawnTimer();
+}
+
+void AAsteroidSpawner::ConfigureSpawnedAsteroid(AAsteroidPickUp* Asteroid) const
+{
+	if (!IsValid(Asteroid))
+	{
+		return;
+	}
+
+	Asteroid->LaunchInDirection(LaunchDirection, LaunchSpeed);
+	Asteroid->SetLifetimeSeconds(AsteroidLifetime);
 }
 
 void AAsteroidSpawner::StartSpawnTimer()
 {
 	RandomSpawnDelay = FMath::RandRange(MinSpawnDelay, MaxSpawnDelay);
 
-	GetWorld()->GetTimerManager().SetTimer(SpawnTimer,this,
-		&AAsteroidSpawner::SpawnActors,RandomSpawnDelay,false);
+	GetWorld()->GetTimerManager().SetTimer(
+		SpawnTimer,
+		this,
+		&AAsteroidSpawner::SpawnActors,
+		RandomSpawnDelay,
+		false);
 }
 
-
-// Called every frame
 void AAsteroidSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

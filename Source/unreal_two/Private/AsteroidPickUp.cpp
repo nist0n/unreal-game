@@ -1,28 +1,103 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "PickUp/AsteroidPickUp.h"
 
-// Sets default values
+#include "Components/ShipHealthComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
+
 AAsteroidPickUp::AAsteroidPickUp()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	bSimulatePhysicsOnSpawn = false;
+	bDestroyOnShipHit = true;
+	ShipDamageAmount = 1;
+	HitCooldownSeconds = 0.25f;
+	LastHitTimeSeconds = -1000.0f;
 }
 
-// Called when the game starts or when spawned
 void AAsteroidPickUp::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PickUpMeshComponent ->SetSimulatePhysics(true);
+	if (PickUpMeshComponent)
+	{
+		ConfigureMeteorOverlapCollision();
+		PickUpMeshComponent->SetSimulatePhysics(bSimulatePhysicsOnSpawn);
+		PickUpMeshComponent->OnComponentBeginOverlap.AddDynamic(this, &AAsteroidPickUp::OnAsteroidOverlap);
+	}
 }
 
-// Called every frame
-void AAsteroidPickUp::Tick(float DeltaTime)
+void AAsteroidPickUp::ConfigureMeteorOverlapCollision()
 {
-	Super::Tick(DeltaTime);
+	if (!PickUpMeshComponent)
+	{
+		return;
+	}
 
+	PickUpMeshComponent->SetCollisionObjectType(ECC_WorldDynamic);
+	PickUpMeshComponent->SetGenerateOverlapEvents(true);
+	// Overlap with ship (Pawn) — no blocking, so the ship is not spun by physics.
+	PickUpMeshComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	PickUpMeshComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 }
 
+void AAsteroidPickUp::LaunchInDirection(FVector Direction, float Speed)
+{
+	if (!PickUpMeshComponent)
+	{
+		return;
+	}
+
+	ConfigureMeteorOverlapCollision();
+	PickUpMeshComponent->SetSimulatePhysics(true);
+	PickUpMeshComponent->SetEnableGravity(false);
+	PickUpMeshComponent->SetPhysicsLinearVelocity(Direction.GetSafeNormal() * Speed);
+}
+
+void AAsteroidPickUp::SetLifetimeSeconds(const float Seconds)
+{
+	if (Seconds > 0.0f)
+	{
+		SetLifeSpan(Seconds);
+	}
+}
+
+void AAsteroidPickUp::OnAsteroidOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!IsValid(OtherActor))
+	{
+		return;
+	}
+
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const float Now = World->GetTimeSeconds();
+	if (Now - LastHitTimeSeconds < HitCooldownSeconds)
+	{
+		return;
+	}
+
+	UShipHealthComponent* ShipHealth = OtherActor->FindComponentByClass<UShipHealthComponent>();
+	if (!IsValid(ShipHealth) && IsValid(OtherActor->GetParentActor()))
+	{
+		ShipHealth = OtherActor->GetParentActor()->FindComponentByClass<UShipHealthComponent>();
+	}
+
+	if (!IsValid(ShipHealth))
+	{
+		return;
+	}
+
+	LastHitTimeSeconds = Now;
+	ShipHealth->ApplyAsteroidHit(ShipDamageAmount);
+
+	if (bDestroyOnShipHit)
+	{
+		Destroy();
+	}
+}
