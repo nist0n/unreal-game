@@ -1,4 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -12,7 +11,6 @@ class UNREAL_TWO_API APickUpbase : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	APickUpbase();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Mesh")
@@ -25,13 +23,11 @@ public:
 	void SetPickUpActive(bool state);
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	bool bIsActive;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 };

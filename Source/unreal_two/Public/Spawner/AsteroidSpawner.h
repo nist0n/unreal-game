@@ -27,15 +27,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
 	float MaxSpawnDelay;
-
-	/** World-space direction asteroids travel (normalized automatically). */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner|Launch")
 	FVector LaunchDirection;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner|Launch", meta = (ClampMin = "0.0"))
 	float LaunchSpeed;
-
-	/** Destroy spawned asteroids after this many seconds (0 = never). */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner|Launch", meta = (ClampMin = "0.0"))
 	float AsteroidLifetime;
 

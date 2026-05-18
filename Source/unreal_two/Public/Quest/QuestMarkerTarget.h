@@ -8,10 +8,6 @@ class UQuest;
 class UStaticMeshComponent;
 class UMaterialInterface;
 
-/**
- * Place in the level and assign LinkedQuestClass.
- * Marker becomes visible when that quest is active on the player.
- */
 UCLASS(Blueprintable)
 class UNREAL_TWO_API AQuestMarkerTarget : public AActor
 {

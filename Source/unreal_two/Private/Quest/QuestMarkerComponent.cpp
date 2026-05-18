@@ -198,10 +198,6 @@ void UQuestMarkerComponent::UpdateAllMarkers()
 void UQuestMarkerComponent::RefreshMarkers()
 {
 	DiscoverMarkerTargets();
-	if (!BindToQuestComponent())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestMarkerComponent: QuestComponent not found on owner/controller."));
-	}
 	UpdateAllMarkers();
 }
 

@@ -33,7 +33,6 @@ void ATeleportGateActor::HandleInteract(AActor* Interactor)
 		}
 	}
 
-	// Blueprint often leaves Interactor disconnected — fall back to player 0.
 	if (!IsValid(InteractorPawn))
 	{
 		if (UWorld* World = GetWorld())
@@ -44,7 +43,6 @@ void ATeleportGateActor::HandleInteract(AActor* Interactor)
 
 	if (!IsValid(InteractorPawn))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("TeleportGate '%s': no valid interactor pawn."), *GetName());
 		return;
 	}
 

@@ -35,20 +35,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport|Input")
 	FKey ReturnKey;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport|UI")
-	FText ReturnHintText;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport|UI")
-	float OnScreenHintDuration;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
 	FTransform CachedBaseTransform;
-
-	/** Ship reset to spawn when returning to base (drag BP_Ship from level). */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport|Ship")
 	TObjectPtr<AActor> LinkedShip;
-
-	/** Used if LinkedShip is not set — finds actors with this tag (e.g. PlayerShip). */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport|Ship")
 	FName ShipSearchTag;
 
@@ -63,9 +55,5 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
 	bool bBaseTransformCached;
 
-	void ShowReturnHint() const;
-	void HideReturnHint() const;
 	void PollReturnInput();
-
-	int32 OnScreenHintKey;
 };

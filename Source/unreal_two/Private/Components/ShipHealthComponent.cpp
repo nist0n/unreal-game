@@ -28,14 +28,8 @@ void UShipHealthComponent::BeginPlay()
         TArray<UStaticMeshComponent*> MeshComponents;
         Owner->GetComponents<UStaticMeshComponent>(MeshComponents);
         
-        UE_LOG(LogTemp, Error, TEXT("=== Looking for Ship StaticMesh ==="));
-        UE_LOG(LogTemp, Error, TEXT("Found %d StaticMesh components"), MeshComponents.Num());
-        
         for (UStaticMeshComponent* Mesh : MeshComponents)
         {
-            UE_LOG(LogTemp, Error, TEXT("  - %s (SimulatingPhysics: %d)"), 
-                *Mesh->GetName(), Mesh->IsSimulatingPhysics());
-        	
             if (!ShipMeshComponent && Mesh->IsSimulatingPhysics())
             {
                 ShipMeshComponent = Mesh;
@@ -51,18 +45,6 @@ void UShipHealthComponent::BeginPlay()
         {
             InitialMeshTransform = ShipMeshComponent->GetComponentTransform();
             bInitialTransformCached = true;
-        	
-            if (UWorld* World = GetWorld())
-            {
-                DrawDebugSphere(World, InitialMeshTransform.GetLocation(), 100.0f, 32, FColor::Green, true, -1.0f, 0, 10.0f);
-                UE_LOG(LogTemp, Error, TEXT("ShipMesh '%s' spawn position: %s"), 
-                    *ShipMeshComponent->GetName(),
-                    *InitialMeshTransform.GetLocation().ToString());
-            }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("ERROR: No StaticMesh component found on %s!"), *Owner->GetName());
         }
     }
 
@@ -101,21 +83,8 @@ void UShipHealthComponent::ResetToSpawnPosition()
     AActor* Owner = GetOwner();
     if (!IsValid(Owner) || !bInitialTransformCached || !ShipMeshComponent)
     {
-        UE_LOG(LogTemp, Error, TEXT("ResetToSpawnPosition FAILED: Owner=%s, Cached=%d, Mesh=%s"), 
-            *GetNameSafe(Owner), 
-            bInitialTransformCached,
-            *GetNameSafe(ShipMeshComponent));
         return;
     }
-
-    FVector OldLocation = ShipMeshComponent->GetComponentLocation();
-    FVector TargetLocation = InitialMeshTransform.GetLocation();
-    float Distance = FVector::Dist(OldLocation, TargetLocation);
-    
-    UE_LOG(LogTemp, Error, TEXT("=== RESETTING SHIP MESH ==="));
-    UE_LOG(LogTemp, Error, TEXT("Current location: %s"), *OldLocation.ToString());
-    UE_LOG(LogTemp, Error, TEXT("Target location:  %s"), *TargetLocation.ToString());
-    UE_LOG(LogTemp, Error, TEXT("Distance: %.2f"), Distance);
 	
     bool bWasSimulating = ShipMeshComponent->IsSimulatingPhysics();
     ShipMeshComponent->SetSimulatePhysics(false);
@@ -124,13 +93,7 @@ void UShipHealthComponent::ResetToSpawnPosition()
     ShipMeshComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 	
     ShipMeshComponent->SetWorldTransform(InitialMeshTransform, false, nullptr, ETeleportType::TeleportPhysics);
-	
-    FVector NewLocation = ShipMeshComponent->GetComponentLocation();
-    bool bSuccess = FVector::Dist(NewLocation, TargetLocation) < 10.0f;
-    
-    UE_LOG(LogTemp, Error, TEXT("New location: %s"), *NewLocation.ToString());
-    UE_LOG(LogTemp, Error, TEXT("Teleport success: %d"), bSuccess);
-	
+
     if (bWasSimulating)
     {
         ShipMeshComponent->SetSimulatePhysics(true);
